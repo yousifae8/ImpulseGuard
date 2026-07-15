@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "343810534181",
+    "project_id": "impulse-guard-13ef4",
+    "storage_bucket": "impulse-guard-13ef4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:343810534181:android:e6dff936cca5d6b75bc8cc",
+        "android_client_info": {
+          "package_name": "com.impulseguard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNOOBGOX7CsTZsdnsNNTL-sXuArBIRfto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
