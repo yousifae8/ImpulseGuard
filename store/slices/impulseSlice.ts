@@ -5,9 +5,9 @@ export interface ImpulseItem {
   itemName: string;
   price: number;
   reason: string;
-  imageUrl?: string;
-  loggedAt: string; 
-  releaseAt: string; 
+  imageUrl?: string | undefined;
+  loggedAt: string;
+  releaseAt: string;
   status: 'pending' | 'ready' | 'purchased' | 'dismissed';
 }
 
