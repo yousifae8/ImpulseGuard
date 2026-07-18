@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface ImpulseItem {
   id: string;
+  userId: string;
   itemName: string;
   price: number;
   reason: string;

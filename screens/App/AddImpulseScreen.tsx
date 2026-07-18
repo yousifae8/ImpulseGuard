@@ -42,15 +42,17 @@ const AddImpulseScreen = () => {
     }
   }
 
-  const uploadImage = async (uri: string) => {
-    const response = await fetch(uri)
-    const blob = await response.blob()
-    const filename = uuidv4()
-    const storageRef = ref(storage, `impulse_images/${userUid}/${filename}`)
-    const uploadTask = await uploadBytes(storageRef, blob)
-    const downloadURL = await getDownloadURL(uploadTask.ref)
-    return downloadURL
-  }
+  // const uploadImage = async (uri: string) => {
+  //   const response = await fetch(uri)
+  //   const blob = await response.blob()
+  //   const filename = uuidv4()
+  //   const storageRef = ref(storage, `impulse_images/${userUid}/${filename}`)
+  //   const uploadTask = await uploadBytes(storageRef, blob)
+  //   const downloadURL = await getDownloadURL(uploadTask.ref)
+  //   return downloadURL
+  // }
+
+  const placeholderImage = 'https://www.pngwing.com/en/free-png-camera-photography-photo-gadget-image-editing-software-consumer-electronics-logo-png-images.html'
 
   const handleAddImpulse = async () => {
     if (!userUid) {
@@ -64,20 +66,21 @@ const AddImpulseScreen = () => {
 
     dispatch(setLoading())
     try {
-      let imageUrl: string | undefined
-      if (image) {
-        imageUrl = await uploadImage(image)
-      }
+      let imageUrl: string | null
+      // if (image) {
+      //   imageUrl = await uploadImage(image)
+      // }
 
       const loggedAt = new Date()
       const releaseAt = new Date(loggedAt.getTime() + 48 * 60 * 60 * 1000)
 
       const newImpulse: ImpulseItem = {
-        id: uuidv4(),
+        id: '',
+        userId: userUid,
         itemName,
         price: parseFloat(price),
         reason,
-        imageUrl: imageUrl || undefined,
+        imageUrl: placeholderImage,
         loggedAt: loggedAt.toISOString(),
         releaseAt: releaseAt.toISOString(),
         status: 'pending',
