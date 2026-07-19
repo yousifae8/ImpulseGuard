@@ -2,12 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface ImpulseItem {
   id: string;
+  userId: string;
   itemName: string;
   price: number;
   reason: string;
-  imageUrl?: string;
-  loggedAt: string; 
-  releaseAt: string; 
+  imageUrl?: string | undefined;
+  loggedAt: string;
+  releaseAt: string;
   status: 'pending' | 'ready' | 'purchased' | 'dismissed';
 }
 
