@@ -1,26 +1,16 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
-import {
-  setLoading,
-  setError,
-  setUser,
-  clearUser,
-} from '../../store/slices/userSlice';
+import { setLoading, setError, setUser } from '../../store/slices/userSlice';
 import { auth } from '../../utils/firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import Input from '../../components/common/Input';
+import Button from '../../components/common/Button';
+import theme from '../../components/common/theme';
 
 type SignupScreenNavigationProp = NativeStackNavigationProp<
   AuthStackParamList,
@@ -55,27 +45,41 @@ const SignupScreen = () => {
   };
   return (
     <View style={styles.container}>
-      <Text>Create Account</Text>
-      <TextInput
+      <Text style={styles.title}>Create Account</Text>
+      <Input
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
+      <Input
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      {status === 'loading' ? (
-        <ActivityIndicator size="large" color="#0000ff"   />
-      ) : (
-        <Button title="Sign Up" onPress={handleSignup} />
-      )}
-      {error && <Text>{error}</Text>}
-      <Button title="Already have an account? Login" onPress={() => navigation.navigate('Login')} />
+      <View style={styles.actionContainer}>
+        {status === 'loading' ? (
+          <ActivityIndicator size="large" color={theme.brand.primary} />
+        ) : (
+          <Button onPress={handleSignup} buttonWidth={'100%'}>
+            Sign Up
+          </Button>
+        )}
+        {error && (
+          <Text style={styles.errorText}>
+            {error}
+          </Text>
+        )}
+        <Button
+          outline
+          onPress={() => navigation.navigate('Login')}
+          buttonWidth={'100%'}
+        >
+          Already have an account? Login
+        </Button>
+      </View>
     </View>
   );
 };
@@ -85,7 +89,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: theme.background.bgBase,
+    paddingHorizontal: 20,  
   },
+  title: {
+    fontSize: theme.fontSize.xxlarge,
+    color: theme.text.textPrimary,
+    fontFamily: theme.fonts.heading,
+    fontWeight: '700',
+    marginBottom: 20,
+  },
+  actionContainer: { marginTop: 50, width: '100%', alignItems: 'center', gap: 20 },
+  errorText: { color: theme.semantic.danger, margin: 10 }
 });
 
 export default SignupScreen;

@@ -1,15 +1,20 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import type { ImpulseItem } from '../../store/slices/impulseSlice'
-import { View, Text, TextInput, Button, ActivityIndicator, Alert, Image, ScrollView, Platform } from 'react-native'
+import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
-import { addImpulse, setLoading, setError } from '../../store/slices/impulseSlice'
-import { db, storage } from '../../utils/firebaseConfig'
+import { setLoading, setError } from '../../store/slices/impulseSlice'
+import { db } from '../../utils/firebaseConfig'
 import { collection, addDoc } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import ImagePicker from 'react-native-image-crop-picker'
-import 'react-native-get-random-values'
-import { v4 as uuidv4 } from 'uuid'
+import theme from '../../components/common/theme';
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { AppTabParamList } from '../../navigation/AppTabs';
+import Button from '../../components/common/Button'
+import Input from '../../components/common/Input'
+
+type AddImpulseScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'AddImpulse'>;
 
 const AddImpulseScreen = () => {
   const [itemName, setItemName] = useState('')
@@ -21,6 +26,8 @@ const AddImpulseScreen = () => {
   const { status, error } = useSelector((state: RootState) => state.impulses)
   const userUid = useSelector((state: RootState) => state.user.uid)
 
+  const navigation = useNavigation<AddImpulseScreenNavigationProp>();
+
   const pickImage = async () => {
     try {
       const imageResult = await ImagePicker.openPicker({
@@ -28,10 +35,11 @@ const AddImpulseScreen = () => {
         height: 400,
         cropping: true,
         mediaType: 'photo',
-        includeBase64: false,
+        includeBase64: true,
+        compressImageQuality: 0.5,
       })
 
-      setImage(imageResult.path)
+      setImage(imageResult.data || null)
     } catch (e: any) {
       if (e.code === 'E_PICKER_CANCELLED') {
         console.log('Image selection cancelled')
@@ -41,18 +49,6 @@ const AddImpulseScreen = () => {
       }
     }
   }
-
-  // const uploadImage = async (uri: string) => {
-  //   const response = await fetch(uri)
-  //   const blob = await response.blob()
-  //   const filename = uuidv4()
-  //   const storageRef = ref(storage, `impulse_images/${userUid}/${filename}`)
-  //   const uploadTask = await uploadBytes(storageRef, blob)
-  //   const downloadURL = await getDownloadURL(uploadTask.ref)
-  //   return downloadURL
-  // }
-
-  const placeholderImage = 'https://www.pngwing.com/en/free-png-camera-photography-photo-gadget-image-editing-software-consumer-electronics-logo-png-images.html'
 
   const handleAddImpulse = async () => {
     if (!userUid) {
@@ -66,33 +62,26 @@ const AddImpulseScreen = () => {
 
     dispatch(setLoading())
     try {
-      let imageUrl: string | null
-      // if (image) {
-      //   imageUrl = await uploadImage(image)
-      // }
-
       const loggedAt = new Date()
       const releaseAt = new Date(loggedAt.getTime() + 48 * 60 * 60 * 1000)
 
-      const newImpulse: ImpulseItem = {
-        id: '',
+      const newImpulse: Omit<ImpulseItem, 'id'> = {
         userId: userUid,
         itemName,
         price: parseFloat(price),
         reason,
-        imageUrl: placeholderImage,
         loggedAt: loggedAt.toISOString(),
         releaseAt: releaseAt.toISOString(),
         status: 'pending',
+        ...(image ? { imageUrl: image } : {}),
       }
 
-      const docRef = await addDoc(collection(db, 'impulses'), newImpulse)
-      dispatch(addImpulse({ ...newImpulse, id: docRef.id }))
+      await addDoc(collection(db, 'impulses'), newImpulse as ImpulseItem)
       Alert.alert('Success', 'Impulse logged successfully! It will be ready for review in 48 hours.')
       setItemName('')
       setPrice('')
       setReason('')
-      setImage(null)
+      setImage(null);
     } catch (e: any) {
       dispatch(setError(e.message))
       Alert.alert('Error logging impulse', e.message)
@@ -100,38 +89,121 @@ const AddImpulseScreen = () => {
   }
 
   return (
-    <ScrollView>
-      <Text>Log a New Impulse</Text>
-      <TextInput
-        placeholder="Item Name (e.g., New Gaming Headset)"
-        value={itemName}
-        onChangeText={setItemName}
-      />
-      <TextInput
-        placeholder="Price (e.g., 150.00)"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-      />
-      <TextInput
-       
-        placeholder="Why do you want this? (Encourage reflection)"
-        value={reason}
-        onChangeText={setReason}
-        multiline
-      />
-      <Button title="Pick an image (Optional)" onPress={pickImage} />
-      {image && <Image source={{ uri: image }} />}
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <Text style={styles.title}>Log a New Impulse</Text>
+      <Text style={styles.subtitle}>Record your impulse and revisit in 48 hours</Text>
 
-      {status === 'loading' ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <Button title="Log Impulse" onPress={handleAddImpulse} />
-      )}
-      {error && <Text>{error}</Text>}
+      <View style={styles.form}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Item Name</Text>
+          <Input
+            placeholder="e.g., New Gaming Headset"
+            value={itemName}
+            onChangeText={setItemName}
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Price ($)</Text>
+          <Input
+            placeholder="e.g., 150.00"
+            value={price}
+            onChangeText={setPrice}
+            keyboardType='number-pad'
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Why do you want this?</Text>
+          <Input
+            placeholder="Encourage reflection..."
+            value={reason}
+            onChangeText={setReason}
+            multiline
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Photo (Optional)</Text>
+          <Button onPress={pickImage} buttonWidth={'100%'}>
+            {image ? 'Change Image' : 'Pick an Image'}
+          </Button>
+          {image && (
+            <View style={styles.imagePreview}>
+              <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
+            </View>
+          )}
+        </View>
+
+        {status === 'loading' ? (
+          <ActivityIndicator size="large" color={theme.brand.primary} style={{ marginVertical: 20 }} />
+        ) : (
+          <Button onPress={handleAddImpulse} buttonWidth={'100%'}>
+            Add Impulse
+          </Button>
+        )}
+
+        {error && <Text style={styles.error}>{error}</Text>}
+      </View>
     </ScrollView>
   );
 };
 
-
 export default AddImpulseScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.background.bgBase,
+  },
+  contentContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: theme.fontSize.xxlarge,
+    fontWeight: '700',
+    color: theme.text.textPrimary,
+    fontFamily: theme.fonts.heading,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: theme.fontSize.small,
+    color: theme.text.textSecondary,
+    marginBottom: 30,
+  },
+  form: {
+    gap: 4,
+  },
+  inputGroup: {
+    marginBottom: 8,
+
+  },
+  label: {
+    fontSize: theme.fontSize.small,
+    color: theme.text.textSecondary,
+    marginBottom: 6,
+    fontWeight: '500',
+
+  },
+  imagePreview: {
+    marginTop: 12,
+    borderRadius: theme.radius.medium,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    width: '100%',
+    height: 100
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.radius.medium,
+  },
+  error: {
+    color: theme.semantic.danger,
+    fontSize: theme.fontSize.small,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+});
