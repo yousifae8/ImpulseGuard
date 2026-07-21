@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+
 export interface ImpulseItem {
   id: string;
   userId: string;
@@ -12,7 +13,7 @@ export interface ImpulseItem {
   status: 'pending' | 'ready' | 'purchased' | 'dismissed';
 }
 
-interface ImpulseState {
+export interface ImpulseState {
   items: ImpulseItem[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;

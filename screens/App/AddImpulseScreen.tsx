@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { setLoading, setError } from '../../store/slices/impulseSlice'
 import { db } from '../../utils/firebaseConfig'
+import type { ImpulseState } from '../../store/slices/impulseSlice'
 import { collection, addDoc } from 'firebase/firestore'
 import ImagePicker from 'react-native-image-crop-picker'
 import theme from '../../components/common/theme';
@@ -23,7 +24,7 @@ const AddImpulseScreen = () => {
   const [image, setImage] = useState<string | null>(null)
 
   const dispatch = useDispatch<AppDispatch>()
-  const { status, error } = useSelector((state: RootState) => state.impulses)
+  const { status, error } = useSelector<RootState, ImpulseState>((state) => state.impulses)
   const userUid = useSelector((state: RootState) => state.user.uid)
 
   const navigation = useNavigation<AddImpulseScreenNavigationProp>();
