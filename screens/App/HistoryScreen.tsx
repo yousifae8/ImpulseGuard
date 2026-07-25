@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,14 +13,13 @@ import { RootState } from '../../store';
 import { ImpulseItem } from '../../store/slices/impulseSlice';
 import { db } from '../../utils/firebaseConfig';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
-import theme from '../../components/common/theme';
+import { useNavigation } from '@react-navigation/native'; import theme from '../../components/common/theme';
+
+
 
 type FilterType = 'all' | 'dismissed' | 'purchased';
-
 const HistoryCard: React.FC<{ item: ImpulseItem; onPress: () => void }> = ({ item, onPress }) => {
   const isPurchased = item.status === 'purchased';
-
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
       {item.imageUrl ? (
@@ -40,13 +39,11 @@ const HistoryCard: React.FC<{ item: ImpulseItem; onPress: () => void }> = ({ ite
           </Text>
           <Text style={styles.cardPrice}>${item.price.toFixed(2)}</Text>
         </View>
-
         {item.reason ? (
           <Text style={styles.cardReason} numberOfLines={2}>
             {item.reason}
           </Text>
         ) : null}
-
         <View style={styles.cardFooter}>
           <View
             style={[
@@ -79,22 +76,19 @@ const HistoryCard: React.FC<{ item: ImpulseItem; onPress: () => void }> = ({ ite
 };
 
 const HistoryScreen = () => {
+
   const navigation = useNavigation<any>();
   const { uid } = useSelector((state: RootState) => state.user);
-
   const [historyItems, setHistoryItems] = useState<ImpulseItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filter, setFilter] = useState<FilterType>('all');
-
   useEffect(() => {
     if (!uid) {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     const q = query(collection(db, 'impulses'), where('userId', '==', uid));
-
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -108,12 +102,9 @@ const HistoryScreen = () => {
             });
           }
         });
-
-        // Sort descending by loggedAt date
         items.sort(
           (a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
         );
-
         setHistoryItems(items);
         setLoading(false);
       },
@@ -122,17 +113,13 @@ const HistoryScreen = () => {
         setLoading(false);
       }
     );
-
     return () => unsubscribe();
   }, [uid]);
-
-  // Compute stats
   const stats = useMemo(() => {
     let moneySaved = 0;
     let dismissedCount = 0;
     let purchasedCount = 0;
     let totalPurchasedAmount = 0;
-
     historyItems.forEach((item) => {
       if (item.status === 'dismissed') {
         moneySaved += item.price;
@@ -142,18 +129,14 @@ const HistoryScreen = () => {
         totalPurchasedAmount += item.price;
       }
     });
-
     return { moneySaved, dismissedCount, purchasedCount, totalPurchasedAmount };
   }, [historyItems]);
-
   const filteredItems = useMemo(() => {
     if (filter === 'dismissed') return historyItems.filter((i) => i.status === 'dismissed');
     if (filter === 'purchased') return historyItems.filter((i) => i.status === 'purchased');
     return historyItems;
   }, [historyItems, filter]);
-
   const handleCardPress = (item: ImpulseItem) => {
-    // Navigate to ImpulseDetail in HomeStack
     navigation.navigate('Home', {
       screen: 'ImpulseDetail',
       params: { impulse: item },
@@ -162,7 +145,6 @@ const HistoryScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Summary Cards Header */}
       <View style={styles.statsContainer}>
         <View style={[styles.statBox, styles.statBoxSaved]}>
           <Text style={styles.statLabel}>Money Saved</Text>
@@ -175,8 +157,6 @@ const HistoryScreen = () => {
           <Text style={styles.statSub}>{stats.purchasedCount} items bought</Text>
         </View>
       </View>
-
-      {/* Filter Tabs */}
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
@@ -203,8 +183,6 @@ const HistoryScreen = () => {
           </Text>
         </TouchableOpacity>
       </View>
-
-      {/* Content Area */}
       {loading ? (
         <ActivityIndicator size="large" color={theme.brand.primary} style={styles.loader} />
       ) : filteredItems.length === 0 ? (
@@ -215,8 +193,8 @@ const HistoryScreen = () => {
             {filter === 'all'
               ? 'Decisions you make on your ready impulses will show up here.'
               : filter === 'dismissed'
-              ? 'No avoided impulses in history yet.'
-              : 'No purchased impulses in history yet.'}
+                ? 'No avoided impulses in history yet.'
+                : 'No purchased impulses in history yet.'}
           </Text>
         </View>
       ) : (
@@ -230,11 +208,10 @@ const HistoryScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
+
     </View>
   );
 };
-
-export default HistoryScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -395,3 +372,5 @@ const styles = StyleSheet.create({
     color: theme.text.textSecondary,
   },
 });
+
+export default HistoryScreen;
