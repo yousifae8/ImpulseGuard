@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ImpulseItem } from '../../store/slices/impulseSlice';
-import { View, ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, ActivityIndicator, Alert, Image, ScrollView, StyleSheet, TouchableOpacity, Platform, PermissionsAndroid } from 'react-native'
 import Input from '../../components/common/Input'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
@@ -32,7 +32,55 @@ const EditImpulseScreen = () => {
     const dispatch = useDispatch<AppDispatch>();
     const userId = useSelector((state: RootState) => state.user.uid);
 
-    const pickImage = async () => {
+    const requestCameraPermission = async (): Promise<boolean> => {
+        if (Platform.OS === 'android') {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.CAMERA,
+                    {
+                        title: 'Camera Permission Required',
+                        message: 'ImpulseGuard needs access to your camera to take a photo of your item.',
+                        buttonNeutral: 'Ask Me Later',
+                        buttonNegative: 'Cancel',
+                        buttonPositive: 'Grant Permission',
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } catch (err) {
+                console.warn(err);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const openCamera = async () => {
+        const hasPermission = await requestCameraPermission();
+        if (!hasPermission) {
+            Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+            return;
+        }
+        try {
+            const imageResult = await ImagePicker.openCamera({
+                mediaType: 'photo',
+                cropping: true,
+                width: 300,
+                height: 400,
+                includeBase64: true,
+                compressImageQuality: 0.5,
+            });
+            if (imageResult.data) {
+                setImageUrl(imageResult.data);
+                setNewImageSelected(true);
+            }
+        } catch (e: any) {
+            if (e.code !== 'E_PICKER_CANCELLED') {
+                Alert.alert('Camera Error', e.message);
+            }
+        }
+    };
+
+    const openGallery = async () => {
         try {
             const imageResult = await ImagePicker.openPicker({
                 mediaType: 'photo',
@@ -47,12 +95,23 @@ const EditImpulseScreen = () => {
                 setNewImageSelected(true);
             }
         } catch (e: any) {
-            if (e.code === 'E_PICKER_CANCELLED') {
-                Alert.alert('Image selection cancelled');
-            } else {
-                Alert.alert('Image Picker Error', e.message);
+            if (e.code !== 'E_PICKER_CANCELLED') {
+                Alert.alert('Gallery Error', e.message);
             }
         }
+    };
+
+    const pickImage = () => {
+        Alert.alert(
+            'Item Photo',
+            'Choose how you want to update the photo:',
+            [
+                { text: '📷 Take Photo with Camera', onPress: openCamera },
+                { text: '🖼️ Choose from Gallery', onPress: openGallery },
+                { text: 'Cancel', style: 'cancel' },
+            ],
+            { cancelable: true }
+        );
     };
 
     const placeholderImage = 'https://via.placeholder.com/150';

@@ -25,6 +25,7 @@ import { db } from '../../utils/firebaseConfig';
 import Button from '../../components/common/Button';
 import theme from '../../components/common/theme';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { cancelImpulseNotification } from '../../utils/notifications';
 
 type ImpulseDetailScreenRouteProp = RouteProp<
   HomeStackParamList,
@@ -104,6 +105,7 @@ const ImpulseDetailScreen = () => {
         status: newStatus,
       });
 
+      await cancelImpulseNotification(impulse.id);
       const updatedItem: ImpulseItem = { ...impulse, status: newStatus };
       dispatch(updateImpulse(updatedItem));
       Alert.alert('Success', `Impulse marked as ${newStatus}.`);
@@ -125,6 +127,7 @@ const ImpulseDetailScreen = () => {
     try {
       const impulseRef = doc(db, 'impulses', impulse.id);
       await deleteDoc(impulseRef);
+      await cancelImpulseNotification(impulse.id);
       dispatch(deleteImpulse(impulse.id));
       Alert.alert('Deleted', 'Impulse removed successfully.');
       navigation.goBack();
