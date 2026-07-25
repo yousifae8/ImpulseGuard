@@ -4,6 +4,7 @@ import HomeScreen from '../screens/App/HomeScreen';
 import AddImpulseScreen from '../screens/App/AddImpulseScreen';
 import HistoryScreen from '../screens/App/HistoryScreen';
 import ImpulseDetailScreen from '../screens/App/ImpulseDetailScreen';
+import EditImpulseScreen from '../screens/App/EditImpulseScreen';
 import { ImpulseItem } from '../store/slices/impulseSlice';
 import theme from '../components/common/theme';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -11,6 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 export type HomeStackParamList = {
   HomeList: undefined;
   ImpulseDetail: { impulse: ImpulseItem };
+  EditImpulse: { impulse: ImpulseItem };
 };
 
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
@@ -39,6 +41,11 @@ function HomeStackNavigator() {
         name="ImpulseDetail"
         component={ImpulseDetailScreen}
         options={{ title: 'Impulse Detail' }}
+      />
+      <HomeStack.Screen
+        name="EditImpulse"
+        component={EditImpulseScreen}
+        options={{ title: 'Edit Impulse' }}
       />
     </HomeStack.Navigator>
   );
@@ -89,7 +96,7 @@ function AppTabs() {
           } else if (route.name === 'History') {
             iconName = 'history';
           }
-
+          
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarHideOnKeyboard: true,

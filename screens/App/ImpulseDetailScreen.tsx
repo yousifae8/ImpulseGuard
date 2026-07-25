@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,22 +13,27 @@ import { HomeStackParamList } from '../../navigation/AppTabs';
 import {
   ImpulseItem,
   updateImpulse,
+  deleteImpulse,
   setLoading,
   setError,
 } from '../../store/slices/impulseSlice';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../store';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../utils/firebaseConfig';
 import Button from '../../components/common/Button';
 import theme from '../../components/common/theme';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 type ImpulseDetailScreenRouteProp = RouteProp<
   HomeStackParamList,
   'ImpulseDetail'
 >;
-type ImpulseDetailScreenNavigationProp = NativeStackNavigationProp<HomeStackParamList, 'ImpulseDetail'>;
+type ImpulseDetailScreenNavigationProp = NativeStackNavigationProp<
+  HomeStackParamList,
+  'ImpulseDetail'
+>;
 
 const ImpulseDetailScreen = () => {
   const route = useRoute<ImpulseDetailScreenRouteProp>();
@@ -36,7 +41,35 @@ const ImpulseDetailScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { status } = useSelector((state: RootState) => state.impulses);
 
-  const { impulse } = route.params;
+  const routeImpulse = route.params.impulse;
+  const reduxImpulse = useSelector((state: RootState) =>
+    state.impulses.items.find((item) => item.id === routeImpulse.id)
+  );
+
+  const [currentImpulse, setCurrentImpulse] = useState<ImpulseItem>(
+    reduxImpulse || routeImpulse
+  );
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (reduxImpulse) {
+      setCurrentImpulse(reduxImpulse);
+    }
+  }, [reduxImpulse]);
+
+  useEffect(() => {
+    if (!routeImpulse?.id) return;
+    const impulseRef = doc(db, 'impulses', routeImpulse.id);
+    const unsubscribe = onSnapshot(impulseRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setCurrentImpulse({ ...docSnap.data(), id: docSnap.id } as ImpulseItem);
+      }
+    });
+    return () => unsubscribe();
+  }, [routeImpulse.id]);
+
+  const impulse = currentImpulse;
 
   const [timeLeft, setTimeLeft] = useState(0);
   const isReadyForReview = timeLeft <= 0;
@@ -81,11 +114,39 @@ const ImpulseDetailScreen = () => {
     }
   };
 
+  const handleEditImpulse = () => {
+    navigation.navigate('EditImpulse', { impulse });
+  };
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    setIsDeleteModalVisible(false);
+    dispatch(setLoading());
+    try {
+      const impulseRef = doc(db, 'impulses', impulse.id);
+      await deleteDoc(impulseRef);
+      dispatch(deleteImpulse(impulse.id));
+      Alert.alert('Deleted', 'Impulse removed successfully.');
+      navigation.goBack();
+    } catch (e: any) {
+      dispatch(setError(e.message));
+      Alert.alert('Error', `Failed to delete impulse: ${e.message}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {impulse.imageUrl && (
         <Image
-          source={{ uri: impulse.imageUrl.startsWith('data:') ? impulse.imageUrl : `data:image/jpeg;base64,${impulse.imageUrl}` }}
+          source={{
+            uri:
+              impulse.imageUrl.startsWith('http') ||
+              impulse.imageUrl.startsWith('data:')
+                ? impulse.imageUrl
+                : `data:image/jpeg;base64,${impulse.imageUrl}`,
+          }}
           style={styles.image}
         />
       )}
@@ -113,31 +174,79 @@ const ImpulseDetailScreen = () => {
             <Text style={styles.timer}>{formatTimeLeft(timeLeft)}</Text>
           </View>
         ) : (
-          <View style={[styles.statusBadge, { backgroundColor: impulse.status === 'purchased' ? '#4cca7433' : '#5a709033' }]}>
-            <Text style={[styles.statusText, { color: impulse.status === 'purchased' ? theme.status.purchased : theme.status.dismissed }]}>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor:
+                  impulse.status === 'purchased' ? '#4cca7433' : '#5a709033',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusText,
+                {
+                  color:
+                    impulse.status === 'purchased'
+                      ? theme.status.purchased
+                      : theme.status.dismissed,
+                },
+              ]}
+            >
               {impulse.status.charAt(0).toUpperCase() + impulse.status.slice(1)}
             </Text>
           </View>
         )}
       </View>
 
+      <View style={styles.actions}>
+        <Button onPress={handleEditImpulse} buttonWidth={'100%'}>
+          Edit Item
+        </Button>
+
+        {isDeleting ? (
+          <ActivityIndicator size="small" color={theme.semantic.danger} />
+        ) : (
+          <Button
+            onPress={() => setIsDeleteModalVisible(true)}
+            buttonWidth={'100%'}
+            outline
+          >
+            Delete Item
+          </Button>
+        )}
+      </View>
+
       {isReadyForReview && impulse.status === 'pending' && (
         <View style={styles.actions}>
           <Text style={styles.actionsLabel}>What would you like to do?</Text>
-          {status === 'loading' ? (
+          {status === 'loading' && !isDeleting ? (
             <ActivityIndicator size="large" color={theme.brand.primary} />
           ) : (
             <>
               <Button onPress={() => handleDecision('purchased')} buttonWidth={'100%'}>
                 I still want to buy it
               </Button>
-              <Button onPress={() => handleDecision('dismissed')} buttonWidth={'100%'} variant="secondary">
+              <Button onPress={() => handleDecision('dismissed')} buttonWidth={'100%'}>
                 I don't want it anymore
               </Button>
             </>
           )}
         </View>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={isDeleteModalVisible}
+        title="Delete Impulse"
+        message={`Are you sure you want to delete "${impulse.itemName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setIsDeleteModalVisible(false)}
+      />
     </ScrollView>
   );
 };
@@ -226,7 +335,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     paddingHorizontal: 24,
-    marginTop: 32,
+    marginTop: 24,
     gap: 12,
   },
   actionsLabel: {

@@ -9,6 +9,8 @@ const Input = ({
   multiline,
   autoCapitalize,
   secureTextEntry,
+  label,
+  numberOfLines,
 }: {
   placeholder: string;
   value: string;
@@ -17,6 +19,8 @@ const Input = ({
   multiline?: boolean;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   secureTextEntry?: boolean;
+  label?: string;
+  numberOfLines?: number;
 }) => {
   return (
     <View style={styles.wrapper}>
@@ -30,6 +34,7 @@ const Input = ({
         autoCapitalize={autoCapitalize}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
+        numberOfLines={numberOfLines}        
       />
     </View>
   );

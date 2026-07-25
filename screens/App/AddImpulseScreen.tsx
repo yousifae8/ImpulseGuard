@@ -3,7 +3,7 @@ import type { ImpulseItem } from '../../store/slices/impulseSlice'
 import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
-import { setLoading, setError } from '../../store/slices/impulseSlice'
+import { setLoading, setError, setSuccess } from '../../store/slices/impulseSlice'
 import { db } from '../../utils/firebaseConfig'
 import type { ImpulseState } from '../../store/slices/impulseSlice'
 import { collection, addDoc } from 'firebase/firestore'
@@ -22,9 +22,10 @@ const AddImpulseScreen = () => {
   const [price, setPrice] = useState('')
   const [reason, setReason] = useState('')
   const [image, setImage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const dispatch = useDispatch<AppDispatch>()
-  const { status, error } = useSelector<RootState, ImpulseState>((state) => state.impulses)
+  const { error } = useSelector<RootState, ImpulseState>((state) => state.impulses)
   const userUid = useSelector((state: RootState) => state.user.uid)
 
   const navigation = useNavigation<AddImpulseScreenNavigationProp>();
@@ -61,6 +62,7 @@ const AddImpulseScreen = () => {
       return
     }
 
+    setIsSubmitting(true)
     dispatch(setLoading())
     try {
       const loggedAt = new Date()
@@ -78,6 +80,7 @@ const AddImpulseScreen = () => {
       }
 
       await addDoc(collection(db, 'impulses'), newImpulse as ImpulseItem)
+      dispatch(setSuccess())
       Alert.alert('Success', 'Impulse logged successfully! It will be ready for review in 48 hours.')
       setItemName('')
       setPrice('')
@@ -86,13 +89,15 @@ const AddImpulseScreen = () => {
     } catch (e: any) {
       dispatch(setError(e.message))
       Alert.alert('Error logging impulse', e.message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Log a New Impulse</Text>
-      <Text style={styles.subtitle}>Record your impulse and revisit in 48 hours</Text>
+      <Text style={styles.title}>Log a New Item</Text>
+      <Text style={styles.subtitle}>Record your item and revisit in 48 hours</Text>
 
       <View style={styles.form}>
         <View style={styles.inputGroup}>
@@ -136,11 +141,11 @@ const AddImpulseScreen = () => {
           )}
         </View>
 
-        {status === 'loading' ? (
+        {isSubmitting ? (
           <ActivityIndicator size="large" color={theme.brand.primary} style={{ marginVertical: 20 }} />
         ) : (
           <Button onPress={handleAddImpulse} buttonWidth={'100%'}>
-            Add Impulse
+            Add Item
           </Button>
         )}
 

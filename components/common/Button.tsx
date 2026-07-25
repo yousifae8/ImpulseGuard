@@ -16,6 +16,7 @@ const Button = ({
   outline,
   icon,
   buttonWidth,
+  title,
 }: {
   children: React.ReactNode;
   onPress: () => void;
@@ -25,6 +26,7 @@ const Button = ({
   outline?: boolean;
   icon?: string;
   buttonWidth?: DimensionValue;
+  title?: string;
 }) => {
   return (
     <TouchableOpacity
