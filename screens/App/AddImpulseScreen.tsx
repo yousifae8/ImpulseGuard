@@ -138,7 +138,6 @@ const AddImpulseScreen = () => {
 
       const docRef = await addDoc(collection(db, 'impulses'), newImpulse as ImpulseItem);
 
-      // Schedule local push notification for when countdown timer finishes
       await scheduleImpulseNotification(
         docRef.id,
         itemName,
