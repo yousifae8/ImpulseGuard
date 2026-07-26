@@ -11,6 +11,8 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
 
 
+import theme from '../components/common/theme';
+
 function AppNavigator () {
   const dispatch = useDispatch<AppDispatch>();
   
@@ -33,8 +35,8 @@ function AppNavigator () {
 
   if(status === 'loading'){
     return (
-      <View >
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={theme.brand.primary} />
       </View>
     );
   }
@@ -45,5 +47,14 @@ function AppNavigator () {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.background.bgBase,
+  },
+});
 
 export default AppNavigator;
