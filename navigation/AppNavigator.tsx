@@ -7,7 +7,7 @@ import AppTabs from './AppTabs';
 import { auth } from '../utils/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { setUser, clearUser, setLoading } from '../store/slices/userSlice';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 
 

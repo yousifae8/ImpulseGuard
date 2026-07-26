@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ImpulseItem } from '../../store/slices/impulseSlice'
-import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet } from 'react-native'
+import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Platform, PermissionsAndroid } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { setLoading, setError, setSuccess } from '../../store/slices/impulseSlice'
@@ -14,6 +14,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { AppTabParamList } from '../../navigation/AppTabs';
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
+import { scheduleImpulseNotification } from '../../utils/notifications'
 
 type AddImpulseScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'AddImpulse'>;
 
@@ -30,7 +31,53 @@ const AddImpulseScreen = () => {
 
   const navigation = useNavigation<AddImpulseScreenNavigationProp>();
 
-  const pickImage = async () => {
+  const requestCameraPermission = async (): Promise<boolean> => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: 'Camera Permission Required',
+            message: 'ImpulseGuard needs access to your camera to take a photo of your item.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'Grant Permission',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const openCamera = async () => {
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
+      return;
+    }
+    try {
+      const imageResult = await ImagePicker.openCamera({
+        width: 300,
+        height: 400,
+        cropping: true,
+        mediaType: 'photo',
+        includeBase64: true,
+        compressImageQuality: 0.5,
+      });
+
+      setImage(imageResult.data || null);
+    } catch (e: any) {
+      if (e.code !== 'E_PICKER_CANCELLED') {
+        Alert.alert('Camera Error', e.message);
+      }
+    }
+  };
+
+  const openGallery = async () => {
     try {
       const imageResult = await ImagePicker.openPicker({
         width: 300,
@@ -39,34 +86,44 @@ const AddImpulseScreen = () => {
         mediaType: 'photo',
         includeBase64: true,
         compressImageQuality: 0.5,
-      })
+      });
 
-      setImage(imageResult.data || null)
+      setImage(imageResult.data || null);
     } catch (e: any) {
-      if (e.code === 'E_PICKER_CANCELLED') {
-        console.log('Image selection cancelled')
-      } else {
-        Alert.alert('Image Picker Error', e.message)
-        console.error(e)
+      if (e.code !== 'E_PICKER_CANCELLED') {
+        Alert.alert('Gallery Error', e.message);
       }
     }
-  }
+  };
+
+  const pickImage = () => {
+    Alert.alert(
+      'Item Photo',
+      'Choose how you want to add a photo:',
+      [
+        { text: '📷 Take Photo with Camera', onPress: openCamera },
+        { text: '🖼️ Choose from Gallery', onPress: openGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const handleAddImpulse = async () => {
     if (!userUid) {
-      Alert.alert('Error', 'You must be logged in to add an impulse.')
-      return
+      Alert.alert('Error', 'You must be logged in to add an impulse.');
+      return;
     }
     if (!itemName || !price || !reason) {
-      Alert.alert('Error', 'Please fill all required fields.')
-      return
+      Alert.alert('Error', 'Please fill all required fields.');
+      return;
     }
 
-    setIsSubmitting(true)
-    dispatch(setLoading())
+    setIsSubmitting(true);
+    dispatch(setLoading());
     try {
-      const loggedAt = new Date()
-      const releaseAt = new Date(loggedAt.getTime() + 48 * 60 * 60 * 1000)
+      const loggedAt = new Date();
+      const releaseAt = new Date(loggedAt.getTime() + 48 * 60 * 60 * 1000);
 
       const newImpulse: Omit<ImpulseItem, 'id'> = {
         userId: userUid,
@@ -77,22 +134,32 @@ const AddImpulseScreen = () => {
         releaseAt: releaseAt.toISOString(),
         status: 'pending',
         ...(image ? { imageUrl: image } : {}),
-      }
+      };
 
-      await addDoc(collection(db, 'impulses'), newImpulse as ImpulseItem)
-      dispatch(setSuccess())
-      Alert.alert('Success', 'Impulse logged successfully! It will be ready for review in 48 hours.')
-      setItemName('')
-      setPrice('')
-      setReason('')
+      const docRef = await addDoc(collection(db, 'impulses'), newImpulse as ImpulseItem);
+
+      await scheduleImpulseNotification(
+        docRef.id,
+        itemName,
+        releaseAt.toISOString()
+      );
+
+      dispatch(setSuccess());
+      Alert.alert(
+        'Success',
+        'Impulse logged successfully! You will receive a notification when the 48-hour delay ends.'
+      );
+      setItemName('');
+      setPrice('');
+      setReason('');
       setImage(null);
     } catch (e: any) {
-      dispatch(setError(e.message))
-      Alert.alert('Error logging impulse', e.message)
+      dispatch(setError(e.message));
+      Alert.alert('Error logging impulse', e.message);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
