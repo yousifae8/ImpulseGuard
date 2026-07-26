@@ -122,7 +122,7 @@ const EditImpulseScreen = () => {
     };
 
     return (
-        <View>
+        <View style={styles.container}>
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
@@ -176,6 +176,10 @@ const EditImpulseScreen = () => {
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: theme.background.bgElevated,
+    },
     scrollContent: {
         padding: theme.spacing.large,
         paddingBottom: 100,
