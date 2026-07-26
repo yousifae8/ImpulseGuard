@@ -40,12 +40,12 @@ function HomeStackNavigator() {
       <HomeStack.Screen
         name="ImpulseDetail"
         component={ImpulseDetailScreen}
-        options={{ title: 'Impulse Detail' }}
+        options={{ title: 'Item Detail' }}
       />
       <HomeStack.Screen
         name="EditImpulse"
         component={EditImpulseScreen}
-        options={{ title: 'Edit Impulse' }}
+        options={{ title: 'Edit Item' }}
       />
     </HomeStack.Navigator>
   );
