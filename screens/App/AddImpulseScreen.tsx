@@ -31,6 +31,15 @@ const AddImpulseScreen = () => {
 
   const navigation = useNavigation<AddImpulseScreenNavigationProp>();
 
+  const handlePriceChange = (text: string) => {
+    const sanitized = text.replace(/[^0-9.]/g, '');
+    const parts = sanitized.split('.');
+    const formatted = parts.length > 2
+      ? parts[0] + '.' + parts.slice(1).join('')
+      : sanitized;
+    setPrice(formatted);
+  };
+
   const requestCameraPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
       try {
@@ -119,6 +128,12 @@ const AddImpulseScreen = () => {
       return;
     }
 
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      Alert.alert('Invalid Price', 'Please enter a valid price greater than 0.');
+      return;
+    }
+
     setIsSubmitting(true);
     dispatch(setLoading());
     try {
@@ -128,7 +143,7 @@ const AddImpulseScreen = () => {
       const newImpulse: Omit<ImpulseItem, 'id'> = {
         userId: userUid,
         itemName,
-        price: parseFloat(price),
+        price: parsedPrice,
         reason,
         loggedAt: loggedAt.toISOString(),
         releaseAt: releaseAt.toISOString(),
@@ -181,7 +196,7 @@ const AddImpulseScreen = () => {
           <Input
             placeholder="e.g., 150.00"
             value={price}
-            onChangeText={setPrice}
+            onChangeText={handlePriceChange}
             keyboardType='number-pad'
           />
         </View>
