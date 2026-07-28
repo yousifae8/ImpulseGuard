@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Image,
   TouchableOpacity,
 } from 'react-native';
 import { useSelector } from 'react-redux';
@@ -16,50 +15,70 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import theme from '../../components/common/theme';
 import HistoryCard from '../../components/HistoryCards';
-
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 type FilterType = 'all' | 'dismissed' | 'purchased';
 
 const HistoryScreen = () => {
-
   const navigation = useNavigation<any>();
   const { uid } = useSelector((state: RootState) => state.user);
   const [historyItems, setHistoryItems] = useState<ImpulseItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filter, setFilter] = useState<FilterType>('all');
+  
+  const unsubscribeSnapshot = useRef<(() => void) | null>(null);
+
   useEffect(() => {
-    if (!uid) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    const q = query(collection(db, 'impulses'), where('userId', '==', uid));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const items: ImpulseItem[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data() as ImpulseItem;
-          if (data.status === 'purchased' || data.status === 'dismissed') {
-            items.push({
-              ...data,
-              id: doc.id,
-            });
-          }
-        });
-        items.sort(
-          (a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
-        );
-        setHistoryItems(items);
-        setLoading(false);
-      },
-      (error) => {
-        console.error('Error fetching history:', error);
-        setLoading(false);
+    const auth = getAuth();
+    
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      if (unsubscribeSnapshot.current) {
+        unsubscribeSnapshot.current();
+        unsubscribeSnapshot.current = null;
       }
-    );
-    return () => unsubscribe();
+
+      if (!firebaseUser || !uid) {
+        setHistoryItems([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const q = query(collection(db, 'impulses'), where('userId', '==', firebaseUser.uid));
+      unsubscribeSnapshot.current = onSnapshot(
+        q,
+        (snapshot) => {
+          const items: ImpulseItem[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data() as ImpulseItem;
+            if (data.status === 'purchased' || data.status === 'dismissed') {
+              items.push({
+                ...data,
+                id: doc.id,
+              });
+            }
+          });
+          items.sort(
+            (a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
+          );
+          setHistoryItems(items);
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error fetching history:', error);
+          setLoading(false);
+        }
+      );
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot.current) {
+        unsubscribeSnapshot.current();
+      }
+    };
   }, [uid]);
+
   const stats = useMemo(() => {
     let moneySaved = 0;
     let dismissedCount = 0;
@@ -76,11 +95,13 @@ const HistoryScreen = () => {
     });
     return { moneySaved, dismissedCount, purchasedCount, totalPurchasedAmount };
   }, [historyItems]);
+
   const filteredItems = useMemo(() => {
     if (filter === 'dismissed') return historyItems.filter((i) => i.status === 'dismissed');
     if (filter === 'purchased') return historyItems.filter((i) => i.status === 'purchased');
     return historyItems;
   }, [historyItems, filter]);
+
   const handleCardPress = (item: ImpulseItem) => {
     navigation.navigate('Home', {
       screen: 'ImpulseDetail',
@@ -153,7 +174,6 @@ const HistoryScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
-
     </View>
   );
 };
@@ -246,18 +266,17 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.large,
     fontWeight: '700',
     color: theme.text.textPrimary,
-    fontFamily: theme.fonts.heading,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: theme.fontSize.medium,
     color: theme.text.textSecondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
   listContent: {
     paddingBottom: 24,
-  },
-
+  }
 });
 
 export default HistoryScreen;
