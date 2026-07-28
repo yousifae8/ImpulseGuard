@@ -32,7 +32,7 @@ const ImpulseCard: React.FC<{ item: ImpulseItem }> = ({ item }) => {
       <View style={styles.cardBody}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{item.itemName}</Text>
-          <Text style={styles.cardPrice}>${item.price.toFixed(2)}</Text>
+          <Text style={styles.cardPrice}>${item.price}</Text>
         </View>
         <Text style={styles.cardReason} numberOfLines={2}>{item.reason}</Text>
         <View style={styles.cardFooter}>
