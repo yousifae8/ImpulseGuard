@@ -162,7 +162,7 @@ const AddImpulseScreen = () => {
       dispatch(setSuccess());
       Alert.alert(
         'Success',
-        'Impulse logged successfully! You will receive a notification when the 48-hour delay ends.'
+        'Item logged successfully! You will receive a notification when the 48-hour delay ends.'
       );
       setItemName('');
       setPrice('');
@@ -170,7 +170,7 @@ const AddImpulseScreen = () => {
       setImage(null);
     } catch (e: any) {
       dispatch(setError(e.message));
-      Alert.alert('Error logging impulse', e.message);
+      Alert.alert('Error logging item', e.message);
     } finally {
       setIsSubmitting(false);
     }

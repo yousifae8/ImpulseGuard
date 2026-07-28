@@ -149,7 +149,7 @@ const HistoryScreen = () => {
         <View style={[styles.statBox, styles.statBoxSaved]}>
           <Text style={styles.statLabel}>Money Saved</Text>
           <Text style={styles.statValueSaved}>${stats.moneySaved.toFixed(2)}</Text>
-          <Text style={styles.statSub}>{stats.dismissedCount} impulses avoided</Text>
+          <Text style={styles.statSub}>{stats.dismissedCount} items avoided</Text>
         </View>
         <View style={[styles.statBox, styles.statBoxPurchased]}>
           <Text style={styles.statLabel}>Spent</Text>
@@ -191,10 +191,10 @@ const HistoryScreen = () => {
           <Text style={styles.emptyTitle}>No History Found</Text>
           <Text style={styles.emptySubtitle}>
             {filter === 'all'
-              ? 'Decisions you make on your ready impulses will show up here.'
+              ? 'Decisions you make on your ready items will show up here.'
               : filter === 'dismissed'
-                ? 'No avoided impulses in history yet.'
-                : 'No purchased impulses in history yet.'}
+                ? 'No items you saved from purchasing.'
+                : 'No items you purchased yet.'}
           </Text>
         </View>
       ) : (
