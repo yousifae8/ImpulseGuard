@@ -8,9 +8,8 @@ const theme = {
         bgInput:      '#1e2332', 
     },
     brand: {
-        primary:      '#e8961e',
-        // primary:      '#e1e81eff',
-
+        // primary:      '#e8961e',
+        primary:      '#e1e81eff',
         primaryText:  '#0c0e14'  
     },
     text: {

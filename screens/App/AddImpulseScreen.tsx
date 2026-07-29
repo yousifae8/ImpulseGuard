@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ImpulseItem } from '../../store/slices/impulseSlice'
-import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Platform, PermissionsAndroid } from 'react-native'
+import { View, Text, ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Platform, PermissionsAndroid, TouchableOpacity } from 'react-native'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { setLoading, setError, setSuccess } from '../../store/slices/impulseSlice'
@@ -15,8 +15,15 @@ import { AppTabParamList } from '../../navigation/AppTabs';
 import Button from '../../components/common/Button'
 import Input from '../../components/common/Input'
 import { scheduleImpulseNotification } from '../../utils/notifications'
+import DatePickerModal from '../../components/common/DatePickerModal'
 
 type AddImpulseScreenNavigationProp = BottomTabNavigationProp<AppTabParamList, 'AddImpulse'>;
+
+const defaultReminder = (): Date => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d;
+};
 
 const AddImpulseScreen = () => {
   const [itemName, setItemName] = useState('')
@@ -24,6 +31,8 @@ const AddImpulseScreen = () => {
   const [reason, setReason] = useState('')
   const [image, setImage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [reminderDate, setReminderDate] = useState<Date>(defaultReminder())
+  const [showPicker, setShowPicker] = useState(false)
 
   const dispatch = useDispatch<AppDispatch>()
   const { error } = useSelector<RootState, ImpulseState>((state) => state.impulses)
@@ -77,7 +86,6 @@ const AddImpulseScreen = () => {
         includeBase64: true,
         compressImageQuality: 0.5,
       });
-
       setImage(imageResult.data || null);
     } catch (e: any) {
       if (e.code !== 'E_PICKER_CANCELLED') {
@@ -96,7 +104,6 @@ const AddImpulseScreen = () => {
         includeBase64: true,
         compressImageQuality: 0.5,
       });
-
       setImage(imageResult.data || null);
     } catch (e: any) {
       if (e.code !== 'E_PICKER_CANCELLED') {
@@ -118,6 +125,18 @@ const AddImpulseScreen = () => {
     );
   };
 
+  const formatReminderDate = (date: Date): string => {
+    return date.toLocaleString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
   const handleAddImpulse = async () => {
     if (!userUid) {
       Alert.alert('Error', 'You must be logged in to add an impulse.');
@@ -134,11 +153,15 @@ const AddImpulseScreen = () => {
       return;
     }
 
+    if (reminderDate <= new Date()) {
+      Alert.alert('Invalid Reminder', 'Please choose a reminder date and time in the future.');
+      return;
+    }
+
     setIsSubmitting(true);
     dispatch(setLoading());
     try {
       const loggedAt = new Date();
-      const releaseAt = new Date(loggedAt.getTime() + 48 * 60 * 60 * 1000);
 
       const newImpulse: Omit<ImpulseItem, 'id'> = {
         userId: userUid,
@@ -146,7 +169,7 @@ const AddImpulseScreen = () => {
         price: parsedPrice,
         reason,
         loggedAt: loggedAt.toISOString(),
-        releaseAt: releaseAt.toISOString(),
+        releaseAt: reminderDate.toISOString(),
         status: 'pending',
         ...(image ? { imageUrl: image } : {}),
       };
@@ -156,18 +179,19 @@ const AddImpulseScreen = () => {
       await scheduleImpulseNotification(
         docRef.id,
         itemName,
-        releaseAt.toISOString()
+        reminderDate.toISOString()
       );
 
       dispatch(setSuccess());
       Alert.alert(
         'Success',
-        'Item logged successfully! You will receive a notification when the 48-hour delay ends.'
+        `Impulse logged! You'll be reminded on ${formatReminderDate(reminderDate)}.`
       );
       setItemName('');
       setPrice('');
       setReason('');
       setImage(null);
+      setReminderDate(defaultReminder());
     } catch (e: any) {
       dispatch(setError(e.message));
       Alert.alert('Error logging item', e.message);
@@ -179,7 +203,7 @@ const AddImpulseScreen = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>Log a New Item</Text>
-      <Text style={styles.subtitle}>Record your item and revisit in 48 hours</Text>
+      <Text style={styles.subtitle}>Record your item and choose when to revisit it</Text>
 
       <View style={styles.form}>
         <View style={styles.inputGroup}>
@@ -212,15 +236,39 @@ const AddImpulseScreen = () => {
         </View>
 
         <View style={styles.inputGroup}>
+          <Text style={styles.label}>Remind Me On</Text>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setShowPicker(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.dateButtonText}>{formatReminderDate(reminderDate)}</Text>
+            <Text style={styles.dateButtonChevron}>›</Text>
+          </TouchableOpacity>
+          <Text style={styles.dateHint}>Tap to change the reminder date & time</Text>
+        </View>
+
+        <DatePickerModal
+          visible={showPicker}
+          value={reminderDate}
+          minimumDate={new Date()}
+          onConfirm={(date) => { setReminderDate(date); setShowPicker(false); }}
+          onCancel={() => setShowPicker(false)}
+        />
+
+        <View style={styles.inputGroup}>
           <Text style={styles.label}>Photo (Optional)</Text>
-          <Button onPress={pickImage} buttonWidth={'100%'}>
-            {image ? 'Change Image' : 'Pick an Image'}
-          </Button>
-          {image && (
-            <View style={styles.imagePreview}>
-              <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
-            </View>
-          )}
+          <View style={styles.imageContainer}>
+            <TouchableOpacity onPress={pickImage} style={styles.imageWrapper} activeOpacity={0.8}>
+              {image ? (
+                <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {isSubmitting ? (
@@ -266,27 +314,71 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 8,
-
   },
   label: {
     fontSize: theme.fontSize.small,
     color: theme.text.textSecondary,
     marginBottom: 6,
     fontWeight: '500',
-
   },
-  imagePreview: {
-    marginTop: 12,
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.background.bgInput,
     borderRadius: theme.radius.medium,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: theme.background.bgElevated,
+  },
+  dateButtonIcon: {
+    fontSize: 18,
+    marginRight: 10,
+  },
+  dateButtonText: {
+    flex: 1,
+    fontSize: theme.fontSize.medium,
+    color: theme.text.textPrimary,
+    fontWeight: '500',
+  },
+  dateButtonChevron: {
+    fontSize: 22,
+    color: theme.text.textSecondary,
+    fontWeight: '300',
+  },
+  dateHint: {
+    fontSize: 11,
+    color: theme.text.textTertiary,
+    marginTop: 4,
+    marginLeft: 2,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  imageWrapper: {
+    width: 140,
+    height: 140,
+    borderRadius: theme.radius.xlarge,
     overflow: 'hidden',
-    alignSelf: 'center',
-    width: '100%',
-    height: 100
+    borderWidth: 3,
+    borderColor: theme.brand.primary,
+    backgroundColor: theme.background.bgSurface,
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imagePlaceholderText: {
+    fontSize: theme.fontSize.small,
+    color: theme.text.textSecondary,
+    fontWeight: '500',
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    borderRadius: theme.radius.medium,
   },
   error: {
     color: theme.semantic.danger,

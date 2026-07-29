@@ -12,7 +12,7 @@ const initialState: UserState = {
   uid: null,
   email: null,
   isLoggedIn: false,
-  status: 'idle',
+  status: 'loading',
   error: null,
 };
 
