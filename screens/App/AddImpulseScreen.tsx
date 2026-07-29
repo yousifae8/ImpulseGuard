@@ -258,14 +258,17 @@ const AddImpulseScreen = () => {
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Photo (Optional)</Text>
-          <Button onPress={pickImage} buttonWidth={'100%'}>
-            {image ? 'Change Image' : 'Pick an Image'}
-          </Button>
-          {image && (
-            <View style={styles.imagePreview}>
-              <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
-            </View>
-          )}
+          <View style={styles.imageContainer}>
+            <TouchableOpacity onPress={pickImage} style={styles.imageWrapper} activeOpacity={0.8}>
+              {image ? (
+                <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>Tap to add photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {isSubmitting ? (
@@ -349,18 +352,33 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginLeft: 2,
   },
-  imagePreview: {
-    marginTop: 12,
-    borderRadius: theme.radius.medium,
+  imageContainer: {
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  imageWrapper: {
+    width: 140,
+    height: 140,
+    borderRadius: theme.radius.xlarge,
     overflow: 'hidden',
-    alignSelf: 'center',
-    width: '100%',
-    height: 100
+    borderWidth: 3,
+    borderColor: theme.brand.primary,
+    backgroundColor: theme.background.bgSurface,
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imagePlaceholderText: {
+    fontSize: theme.fontSize.small,
+    color: theme.text.textSecondary,
+    fontWeight: '500',
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    borderRadius: theme.radius.medium,
   },
   error: {
     color: theme.semantic.danger,
