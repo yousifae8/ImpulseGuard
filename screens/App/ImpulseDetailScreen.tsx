@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -59,15 +59,32 @@ const ImpulseDetailScreen = () => {
     }
   }, [reduxImpulse]);
 
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (!routeImpulse?.id) return;
     const impulseRef = doc(db, 'impulses', routeImpulse.id);
-    const unsubscribe = onSnapshot(impulseRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setCurrentImpulse({ ...docSnap.data(), id: docSnap.id } as ImpulseItem);
+    const unsubscribe = onSnapshot(
+      impulseRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setCurrentImpulse({ ...docSnap.data(), id: docSnap.id } as ImpulseItem);
+        }
+        else if (!unsubscribeRef.current) {
+          navigation.goBack();
+        }
+      },
+      (error) => {
+        if (error.code !== 'permission-denied') {
+          console.error('Snapshot error:', error);
+        }
       }
-    });
-    return () => unsubscribe();
+    );
+    unsubscribeRef.current = unsubscribe;
+    return () => {
+      unsubscribe();
+      unsubscribeRef.current = null;
+    };
   }, [routeImpulse.id]);
 
   const impulse = currentImpulse;
@@ -125,6 +142,10 @@ const ImpulseDetailScreen = () => {
     setIsDeleteModalVisible(false);
     dispatch(setLoading());
     try {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
+      }
       const impulseRef = doc(db, 'impulses', impulse.id);
       await deleteDoc(impulseRef);
       await cancelImpulseNotification(impulse.id);
