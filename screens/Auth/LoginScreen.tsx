@@ -86,7 +86,9 @@ const LoginScreen = () => {
         {status === 'loading' ? (
           <ActivityIndicator size="large" color={theme.brand.primary} />
         ) : (
-          <Button onPress={() => formik.handleSubmit()} buttonWidth={'100%'}>
+          <Button onPress={() => formik.handleSubmit()} buttonWidth={'100%'}
+            fontSize={theme.fontSize.medium}
+          >
             Login
           </Button>
         )}
@@ -102,6 +104,7 @@ const LoginScreen = () => {
             outline
             onPress={() => navigation.navigate('Signup')}
             buttonWidth={'auto'}
+            fontSize={theme.fontSize.medium}
           >
             Signup
           </Button>

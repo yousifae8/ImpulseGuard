@@ -225,9 +225,13 @@ const EditImpulseScreen = () => {
                 {isUpdating ? (
                     <ActivityIndicator size="large" color={theme.brand.primary} style={{ marginTop: theme.spacing.large }} />
                 ) : (
-                    <Button onPress={handleUpdateImpulse}>
-                        Update Impulse
-                    </Button>
+                    <View style={{ marginTop: 80 }}>
+                        <Button onPress={handleUpdateImpulse}
+                            fontSize={theme.fontSize.medium}
+                        >
+                            Update Item
+                        </Button>
+                    </View>
                 )}
             </ScrollView>
         </View>

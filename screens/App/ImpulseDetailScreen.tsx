@@ -125,11 +125,11 @@ const ImpulseDetailScreen = () => {
       await cancelImpulseNotification(impulse.id);
       const updatedItem: ImpulseItem = { ...impulse, status: newStatus };
       dispatch(updateImpulse(updatedItem));
-      Alert.alert('Success', `Impulse marked as ${newStatus}.`);
+      Alert.alert('Success', `Item marked as ${newStatus}.`);
       navigation.goBack();
     } catch (e: any) {
       dispatch(setError(e.message));
-      Alert.alert('Error', `Failed to update impulse: ${e.message}`);
+      Alert.alert('Error', `Failed to update item: ${e.message}`);
     }
   };
 
@@ -150,11 +150,11 @@ const ImpulseDetailScreen = () => {
       await deleteDoc(impulseRef);
       await cancelImpulseNotification(impulse.id);
       dispatch(deleteImpulse(impulse.id));
-      Alert.alert('Deleted', 'Impulse removed successfully.');
+      Alert.alert('Deleted', 'Item removed successfully.');
       navigation.goBack();
     } catch (e: any) {
       dispatch(setError(e.message));
-      Alert.alert('Error', `Failed to delete impulse: ${e.message}`);
+      Alert.alert('Error', `Failed to delete item: ${e.message}`);
     } finally {
       setIsDeleting(false);
     }
