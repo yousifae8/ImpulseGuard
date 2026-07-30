@@ -72,13 +72,16 @@ const SignupScreen = () => {
             {error}
           </Text>
         )}
+        <View style={styles.row}>
+<Text style={styles.signupText}>Already have an account?</Text>
         <Button
           outline
           onPress={() => navigation.navigate('Login')}
-          buttonWidth={'100%'}
+          buttonWidth={'auto'}
         >
-          Already have an account? Login
+        Login
         </Button>
+        </View>
       </View>
     </View>
   );
@@ -90,7 +93,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.background.bgBase,
-    paddingHorizontal: 20,  
+    paddingHorizontal: 20,
+    gap: 20,
   },
   title: {
     fontSize: theme.fontSize.xxlarge,
@@ -100,7 +104,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionContainer: { marginTop: 50, width: '100%', alignItems: 'center', gap: 20 },
-  errorText: { color: theme.semantic.danger, margin: 10 }
+  errorText: { color: theme.semantic.danger, margin: 10 },
+  signupText: {
+    fontSize: theme.fontSize.medium,
+    color: theme.text.textPrimary,
+    fontFamily: theme.fonts.body,
+    fontWeight: '600',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: "center",
+
+  },
 });
 
 export default SignupScreen;

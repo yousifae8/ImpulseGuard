@@ -69,8 +69,7 @@ const styles = StyleSheet.create({
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: theme.brand.primary,
+   
   },
   disabled: {
     opacity: 0.5,
@@ -86,6 +85,7 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: theme.brand.primary,
+    textDecorationLine: 'underline',
   },
 });
 

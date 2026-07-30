@@ -75,13 +75,17 @@ const LoginScreen = () => {
             {error}
           </Text>
         )}
+
+<View style={styles.row}>
+  <Text style={styles.signupText}>Don't have an account?</Text>
         <Button
           outline
           onPress={() => navigation.navigate('Signup')}
-          buttonWidth={'100%'}
+          buttonWidth={'auto'}
         >
-          Don't have an account? Signup
+          Signup
         </Button>
+</View>
       </View>
     </View>
   );
@@ -94,6 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.background.bgBase,
     paddingHorizontal: 20,
+    gap: 20,
   },
   input: {
     width: '80%',
@@ -123,6 +128,17 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   errorText: { color: theme.semantic.danger, margin: 10 },
+  signupText: {
+    fontSize: theme.fontSize.medium,
+    color: theme.text.textPrimary,
+    fontFamily: theme.fonts.body,
+    fontWeight: '600',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+
+  },
 });
 
 export default LoginScreen;
