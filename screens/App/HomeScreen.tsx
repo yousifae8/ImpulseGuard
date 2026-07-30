@@ -60,7 +60,11 @@ const HomeScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.greeting}>Your Items</Text>
-        <Button onPress={handleLogout} buttonWidth={80}>
+        <Button onPress={handleLogout} 
+        buttonWidth={60}
+        buttonHeight={30}
+        fontSize={12}
+>  
           Logout
         </Button>
       </View>

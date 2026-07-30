@@ -16,7 +16,8 @@ const Button = ({
   outline,
   icon,
   buttonWidth,
-  title,
+  buttonHeight,
+  fontSize,
 }: {
   children: React.ReactNode;
   onPress: () => void;
@@ -26,7 +27,8 @@ const Button = ({
   outline?: boolean;
   icon?: string;
   buttonWidth?: DimensionValue;
-  title?: string;
+  buttonHeight?: DimensionValue;
+  fontSize?: number;
 }) => {
   return (
     <TouchableOpacity
@@ -34,6 +36,7 @@ const Button = ({
         styles.button,
         outline && styles.outline,
         buttonWidth ? { width: buttonWidth } : {},
+        buttonHeight ? { height: buttonHeight } : {height: 45},
         disabled && styles.disabled,
       ]}
       onPress={onPress}
@@ -48,7 +51,9 @@ const Button = ({
             styles.text,
             variant === 'secondary' && styles.secondaryText,
             outline && styles.outlineText,
+            fontSize ? { fontSize: fontSize } : {}, 
           ]}
+        
         >
           {children}
         </Text>
@@ -60,12 +65,9 @@ const Button = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: theme.brand.primary,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
     borderRadius: theme.radius.small,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: '30%',
   },
   outline: {
     backgroundColor: 'transparent',
@@ -76,7 +78,6 @@ const styles = StyleSheet.create({
   },
   text: {
     color: theme.brand.primaryText,
-    fontSize: theme.fontSize.medium,
     fontWeight: '600',
     fontFamily: theme.fonts.body,
   },
