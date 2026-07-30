@@ -185,7 +185,7 @@ const AddImpulseScreen = () => {
       dispatch(setSuccess());
       Alert.alert(
         'Success',
-        `Impulse logged! You'll be reminded on ${formatReminderDate(reminderDate)}.`
+        `Item logged! You'll be reminded on ${formatReminderDate(reminderDate)}.`
       );
       setItemName('');
       setPrice('');

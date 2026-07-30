@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -8,6 +7,8 @@ import { RootState, AppDispatch } from '../../store';
 import { setLoading, setError, setUser } from '../../store/slices/userSlice';
 import { auth } from '../../utils/firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import Button from '../../components/common/Button';
 import theme from '../../components/common/theme';
 import Input from '../../components/common/Input';
@@ -17,75 +18,94 @@ type LoginScreenNavigationProp = NativeStackNavigationProp<
   'Login'
 >;
 
+const loginSchema = Yup.object().shape({
+  email: Yup.string()
+    .email('Invalid email address')
+    .required('Email is required'),
+  password: Yup.string()
+    .required('Password is required'),
+});
+
 const LoginScreen = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const dispatch = useDispatch<AppDispatch>();
   const { status, error } = useSelector((state: RootState) => state.user);
 
-  const handlelogin = async () => {
-    dispatch(setLoading());
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      dispatch(
-        setUser({
-          uid: userCredential.user.uid,
-          email: userCredential.user.email || '',
-        }),
-      );
-    } catch (e: any) {
-      dispatch(setError(e.message));
-      Alert.alert('Login Error', e.message);
-    }
-  };
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    validationSchema: loginSchema,
+    onSubmit: async (values) => {
+      dispatch(setLoading());
+      try {
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          values.email,
+          values.password,
+        );
+        dispatch(
+          setUser({
+            uid: userCredential.user.uid,
+            email: userCredential.user.email || '',
+          }),
+        );
+      } catch (e: any) {
+        dispatch(setError(e.message));
+        Alert.alert('Login Error', e.message);
+      }
+    },
+  });
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       <Input
         placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+        value={formik.values.email}
+        onChangeText={formik.handleChange('email')}
+        onBlur={formik.handleBlur('email')}
         keyboardType="email-address"
         autoCapitalize="none"
+        error={formik.errors.email}
+        touched={formik.touched.email}
       />
       <Input
         placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
+        value={formik.values.password}
+        onChangeText={formik.handleChange('password')}
+        onBlur={formik.handleBlur('password')}
         secureTextEntry
         keyboardType="default"
+        error={formik.errors.password}
+        touched={formik.touched.password}
       />
 
       <View style={styles.actionContainer}>
         {status === 'loading' ? (
           <ActivityIndicator size="large" color={theme.brand.primary} />
         ) : (
-          <Button onPress={handlelogin} buttonWidth={'100%'}>
+          <Button onPress={() => formik.handleSubmit()} buttonWidth={'100%'}>
             Login
           </Button>
         )}
         {error && (
-          <Text style={{ color: theme.semantic.danger, margin: 10 }}>
+          <Text style={styles.errorText}>
             {error}
           </Text>
         )}
 
-<View style={styles.row}>
-  <Text style={styles.signupText}>Don't have an account?</Text>
-        <Button
-          outline
-          onPress={() => navigation.navigate('Signup')}
-          buttonWidth={'auto'}
-        >
-          Signup
-        </Button>
-</View>
+        <View style={styles.row}>
+          <Text style={styles.signupText}>Don't have an account?</Text>
+          <Button
+            outline
+            onPress={() => navigation.navigate('Signup')}
+            buttonWidth={'auto'}
+          >
+            Signup
+          </Button>
+        </View>
       </View>
     </View>
   );
@@ -98,21 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.background.bgBase,
     paddingHorizontal: 20,
-    gap: 20,
-  },
-  input: {
-    width: '80%',
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: theme.radius.small,
-    padding: 10,
-    marginBottom: 10,
-    color: theme.text.textPrimary,
-  },
-  error: {
-    color: theme.semantic.danger,
-    marginBottom: 10,
+    gap: 12,
   },
   title: {
     fontSize: theme.fontSize.xxlarge,
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   actionContainer: {
-    marginTop: 50,
+    marginTop: 30,
     width: '100%',
     alignItems: 'center',
     gap: 20,
@@ -137,7 +143,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-
+    justifyContent: 'center',
+    gap: 5,
   },
 });
 

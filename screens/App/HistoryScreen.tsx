@@ -153,7 +153,7 @@ const HistoryScreen = () => {
         <ActivityIndicator size="large" color={theme.brand.primary} style={styles.loader} />
       ) : filteredItems.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>📜</Text>
+          {/* <Text style={styles.emptyEmoji}>📜</Text> */}
           <Text style={styles.emptyTitle}>No History Found</Text>
           <Text style={styles.emptySubtitle}>
             {filter === 'all'
@@ -258,10 +258,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
+  // emptyEmoji: {
+  //   fontSize: 48,
+  //   marginBottom: 12,
+  // },
   emptyTitle: {
     fontSize: theme.fontSize.large,
     fontWeight: '700',

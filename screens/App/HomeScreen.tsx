@@ -79,7 +79,7 @@ const HomeScreen = () => {
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>📋</Text>
+          {/* <Text style={styles.emptyEmoji}>📋</Text> */}
           <Text style={styles.emptyTitle}>No pending items</Text>
           <Text style={styles.emptySubtitle}>Tap "Add" to log your first item</Text>
         </View>
@@ -131,10 +131,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 80,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
+  // emptyEmoji: {
+  //   fontSize: 48,
+  //   marginBottom: 12,
+  // },
   emptyTitle: {
     fontSize: theme.fontSize.large,
     color: theme.text.textPrimary,
